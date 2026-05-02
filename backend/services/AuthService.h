@@ -8,6 +8,7 @@ private:
     std::vector<User> users;
     User* currentUser;
     std::string hashPassword(const std::string& uname, const std::string& pass) const;
+    bool isRegistrationValid(const std::string& uname, const std::string& pass, const std::string& role) const;
     bool isUsernameTaken(const std::string& uname) const;
     int getNextUserId() const;
 
