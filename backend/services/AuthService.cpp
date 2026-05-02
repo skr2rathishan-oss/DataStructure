@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <iomanip>
+#include <random>
 #include <sstream>
 #include <vector>
 
@@ -10,6 +11,7 @@ AuthService::AuthService() {
 }
 
 namespace {
+constexpr int kHashIterations = 10000;
 constexpr std::array<uint32_t, 64> kConstants = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -111,8 +113,23 @@ std::string sha256(const std::string& input) {
 }
 }
 
-std::string AuthService::hashPassword(const std::string& uname, const std::string& pass) const {
-    return sha256(uname + "::" + pass);
+std::string AuthService::hashPassword(const std::string& pass, const std::string& salt) const {
+    std::string hashed = salt + "::" + pass;
+    for (int i = 0; i < kHashIterations; ++i) {
+        hashed = sha256(hashed);
+    }
+    return hashed;
+}
+
+std::string AuthService::generateSalt(size_t length) const {
+    std::random_device device;
+    std::uniform_int_distribution<int> distribution(0, 255);
+    std::ostringstream output;
+    output << std::hex << std::setfill('0');
+    for (size_t i = 0; i < length; ++i) {
+        output << std::setw(2) << distribution(device);
+    }
+    return output.str();
 }
 
 bool AuthService::isRegistrationValid(const std::string& uname, const std::string& pass, const std::string& role) const {
@@ -148,7 +165,8 @@ bool AuthService::registerUser(int id, const std::string& uname, const std::stri
     if (!isRegistrationValid(uname, pass, role)) {
         return false;
     }
-    users.push_back(User(id, uname, hashPassword(uname, pass), role));
+    std::string salt = generateSalt();
+    users.push_back(User(id, uname, hashPassword(pass, salt), role, salt));
     return true;
 }
 
@@ -156,16 +174,19 @@ bool AuthService::registerUser(const std::string& uname, const std::string& pass
     if (!isRegistrationValid(uname, pass, role)) {
         return false;
     }
-    users.push_back(User(getNextUserId(), uname, hashPassword(uname, pass), role));
+    std::string salt = generateSalt();
+    users.push_back(User(getNextUserId(), uname, hashPassword(pass, salt), role, salt));
     return true;
 }
 
 bool AuthService::login(const std::string& uname, const std::string& pass) {
-    const std::string hashedPassword = hashPassword(uname, pass);
     for (size_t i = 0; i < users.size(); ++i) {
-        if (users[i].username == uname && users[i].password == hashedPassword) {
-            currentUser = &users[i];
-            return true;
+        if (users[i].username == uname) {
+            if (users[i].password == hashPassword(pass, users[i].salt)) {
+                currentUser = &users[i];
+                return true;
+            }
+            return false;
         }
     }
     return false;

@@ -7,7 +7,8 @@ class AuthService {
 private:
     std::vector<User> users;
     User* currentUser;
-    std::string hashPassword(const std::string& uname, const std::string& pass) const;
+    std::string hashPassword(const std::string& pass, const std::string& salt) const;
+    std::string generateSalt(size_t length = 16) const;
     bool isRegistrationValid(const std::string& uname, const std::string& pass, const std::string& role) const;
     bool isUsernameTaken(const std::string& uname) const;
     int getNextUserId() const;

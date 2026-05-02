@@ -35,7 +35,7 @@ int main() {
             if (auth.registerUser(username, password)) {
                 cout << "Registration successful! You can now log in." << endl;
             } else {
-                cout << "Registration failed. Username may be empty or already exists." << endl;
+                cout << "Registration failed. Please check your input and try again." << endl;
             }
         } else if (choice == 2) {
             string username, password;
