@@ -7,11 +7,17 @@ class AuthService {
 private:
     std::vector<User> users;
     User* currentUser;
+    std::string hashPassword(const std::string& pass, const std::string& salt) const;
+    std::string generateSalt(size_t length = 16) const;
+    bool isRegistrationValid(const std::string& uname, const std::string& pass, const std::string& role) const;
+    bool isUsernameTaken(const std::string& uname) const;
+    int getNextUserId() const;
 
 public:
     AuthService();
-    void registerUser(int id, std::string uname, std::string pass, std::string role);
-    bool login(std::string uname, std::string pass);
+    bool registerUser(int id, const std::string& uname, const std::string& pass, const std::string& role);
+    bool registerUser(const std::string& uname, const std::string& pass, const std::string& role = "User");
+    bool login(const std::string& uname, const std::string& pass);
     User* getCurrentUser();
     void logout();
 };
