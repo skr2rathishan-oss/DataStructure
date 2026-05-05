@@ -1,67 +1,66 @@
 #include <iostream>
-#include <limits>
-#include "services/AuthService.h"
-#include "sample_data/sample_data.h"
+#include "../backend/services/AuthService.h"
 using namespace std;
 
 int main() {
     AuthService auth;
-    loadSampleUsers(auth);
 
-    bool running = true;
+    // Sample users
+    auth.registerUser(1, "admin", "admin123", "Admin");
+    auth.registerUser(2, "user1", "user123", "User");
+    auth.registerUser(3, "viewer1", "viewer123", "Viewer");
 
-    while (running) {
-        cout << "\n=== Smart Cloud Storage ===" << endl;
-        cout << "1. Register" << endl;
-        cout << "2. Login" << endl;
-        cout << "3. Exit" << endl;
-        cout << "Choice: ";
+    int choice;
+    string username, password;
 
-        int choice = 0;
-        if (!(cin >> choice)) {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Invalid input. Try again." << endl;
-            continue;
-        }
+    do {
+        cout << "\n=== Smart Cloud Storage ===\n";
+        cout << "1. Login\n";
+        cout << "2. Show Current User\n";
+        cout << "3. Logout\n";
+        cout << "4. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
 
-        if (choice == 1) {
-            string username, password;
-            cout << "New username: ";
+        switch (choice) {
+        case 1:
+            cout << "Enter username: ";
             cin >> username;
-            cout << "New password: ";
-            cin >> password;
-
-            if (auth.registerUser(username, password)) {
-                cout << "Registration successful! You can now log in." << endl;
-            } else {
-                cout << "Registration failed. Please check your input and try again." << endl;
-            }
-        } else if (choice == 2) {
-            string username, password;
-            cout << "Username: ";
-            cin >> username;
-            cout << "Password: ";
+            cout << "Enter password: ";
             cin >> password;
 
             if (auth.login(username, password)) {
-                cout << "\nLogin successful!" << endl;
-                cout << "Welcome: " << auth.getCurrentUser()->username << endl;
+                cout << "Login successful\n";
+                cout << "Welcome, " << auth.getCurrentUser()->username << endl;
                 cout << "Role: " << auth.getCurrentUser()->role << endl;
-                running = false;
             } else {
-                cout << "\nInvalid username or password." << endl;
+                cout << "Invalid username or password\n";
             }
-        } else if (choice == 3) {
-            running = false;
-        } else {
-            cout << "Invalid choice. Try again." << endl;
-        }
-    }
+            break;
 
-    cout << "\nPress Enter to exit...";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cin.get();
+        case 2:
+            if (auth.isLoggedIn()) {
+                cout << "Current user: " << auth.getCurrentUser()->username
+                     << " (" << auth.getCurrentUser()->role << ")\n";
+            } else {
+                cout << "No user is logged in\n";
+            }
+            break;
+
+        case 3:
+            auth.logout();
+            cout << "Logged out successfully\n";
+            break;
+
+        case 4:
+            cout << "Exiting...\n";
+            break;
+
+        default:
+            cout << "Invalid choice\n";
+        }
+
+    } while (choice != 4);
 
     return 0;
 }

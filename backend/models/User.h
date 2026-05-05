@@ -2,23 +2,32 @@
 #define USER_H
 
 #include <string>
+using namespace std;
 
 class User {
 public:
     int userId;
-    std::string username;
-    std::string password;
-    std::string role;
-    std::string salt;
+    string username;
+    string password;
+    string role;
+    bool isActive;
 
-    User() {}
+    // Default constructor
+    User() {
+        userId = 0;
+        username = "";
+        password = "";
+        role = "";
+        isActive = true;
+    }
 
-    User(int id, std::string uname, std::string pass, std::string r, std::string s = "") {
+    // Constructor with values
+    User(int id, string uname, string pass, string r) {
         userId = id;
         username = uname;
         password = pass;
         role = r;
-        salt = s;
+        isActive = true;
     }
 };
 

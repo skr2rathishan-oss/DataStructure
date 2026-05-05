@@ -1,23 +1,48 @@
-#pragma once
+#ifndef AUTHSERVICE_H
+#define AUTHSERVICE_H
+
 #include <string>
-#include <vector>
 #include "../models/User.h"
+#include "../data_structures/HashTable.h"
+using namespace std;
 
 class AuthService {
 private:
-    std::vector<User> users;
+    HashTable userTable;
     User* currentUser;
-    std::string hashPassword(const std::string& pass, const std::string& salt) const;
-    std::string generateSalt(size_t length = 16) const;
-    bool isRegistrationValid(const std::string& uname, const std::string& pass, const std::string& role) const;
-    bool isUsernameTaken(const std::string& uname) const;
-    int getNextUserId() const;
 
 public:
-    AuthService();
-    bool registerUser(int id, const std::string& uname, const std::string& pass, const std::string& role);
-    bool registerUser(const std::string& uname, const std::string& pass, const std::string& role = "User");
-    bool login(const std::string& uname, const std::string& pass);
-    User* getCurrentUser();
-    void logout();
+    AuthService() {
+        currentUser = nullptr;
+    }
+
+    void registerUser(int id, string username, string password, string role) {
+        User newUser(id, username, password, role);
+        userTable.insert(newUser);
+    }
+
+    bool login(string username, string password) {
+        User* user = userTable.get(username);
+
+        if (user != nullptr && user->password == password && user->isActive) {
+            currentUser = user;
+            return true;
+        }
+
+        return false;
+    }
+
+    void logout() {
+        currentUser = nullptr;
+    }
+
+    bool isLoggedIn() {
+        return currentUser != nullptr;
+    }
+
+    User* getCurrentUser() {
+        return currentUser;
+    }
 };
+
+#endif
