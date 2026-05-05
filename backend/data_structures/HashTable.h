@@ -1,11 +1,11 @@
-#ifndef USERHASHTABLE_H
-#define USERHASHTABLE_H
+#ifndef HASHTABLE_H
+#define HASHTABLE_H
 
 #include <string>
 #include "../models/User.h"
 using namespace std;
 
-class UserHashTable {
+class HashTable {
 private:
     static const int SIZE = 20;
     User table[SIZE];
@@ -20,7 +20,7 @@ private:
     }
 
 public:
-    UserHashTable() {
+    HashTable() {
         for (int i = 0; i < SIZE; i++) {
             occupied[i] = false;
         }
