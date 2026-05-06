@@ -1,17 +1,48 @@
-#pragma once
+#ifndef AUTHSERVICE_H
+#define AUTHSERVICE_H
+
 #include <string>
-#include <vector>
 #include "../models/User.h"
+#include "../data_structures/HashTable.h"
+using namespace std;
 
 class AuthService {
 private:
-    std::vector<User> users;
+    HashTable userTable;
     User* currentUser;
 
 public:
-    AuthService();
-    void registerUser(int id, std::string uname, std::string pass, std::string role);
-    bool login(std::string uname, std::string pass);
-    User* getCurrentUser();
-    void logout();
+    AuthService() {
+        currentUser = nullptr;
+    }
+
+    void registerUser(int id, string username, string password, string role) {
+        User newUser(id, username, password, role);
+        userTable.insert(newUser);
+    }
+
+    bool login(string username, string password) {
+        User* user = userTable.get(username);
+
+        if (user != nullptr && user->password == password && user->isActive) {
+            currentUser = user;
+            return true;
+        }
+
+        return false;
+    }
+
+    void logout() {
+        currentUser = nullptr;
+    }
+
+    bool isLoggedIn() {
+        return currentUser != nullptr;
+    }
+
+    User* getCurrentUser() {
+        return currentUser;
+    }
 };
+
+#endif
