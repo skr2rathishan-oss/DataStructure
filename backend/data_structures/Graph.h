@@ -23,10 +23,16 @@ public:
     }
 
     void addNode(string name) {
-        if (count < MAX) {
-            nodes[count] = name;
-            count++;
+        if (count >= MAX) {
+            return;
         }
+
+        if (findNode(name) != -1) {
+            return; // node already exists
+        }
+
+        nodes[count] = name;
+        count++;
     }
 
     int findNode(string name) {
@@ -44,6 +50,15 @@ public:
 
         if (i != -1 && j != -1) {
             adj[i][j] = 1;
+        }
+    }
+
+    void removeEdge(string from, string to) {
+        int i = findNode(from);
+        int j = findNode(to);
+
+        if (i != -1 && j != -1) {
+            adj[i][j] = 0;
         }
     }
 
