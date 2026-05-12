@@ -1,34 +1,29 @@
-#pragma once
+#ifndef SESSION_H
+#define SESSION_H
+
 #include <string>
-#include <ctime>
-#include <iostream>
 using namespace std;
 
-struct Session {
-    int    userId;
+class Session {
+public:
+    int userId;
     string username;
     string role;
-    string loginTime;
-    bool   valid;
+    bool active;
 
-    // Empty session (logged out state)
-    Session() : userId(-1), valid(false) {}
-
-    // Active session (created on login)
-    Session(int id, const string& uname, const string& r)
-        : userId(id), username(uname), role(r), valid(true) {
-        time_t now = time(nullptr);
-        char buf[32];
-        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&now));
-        loginTime = string(buf);
+    Session() {
+        userId = 0;
+        username = "";
+        role = "";
+        active = false;
     }
 
-    bool isValid() const { return valid; }
-
-    void display() const {
-        if (!valid) return;
-        cout << "  Session | User: " << username
-             << " | Role: "      << role
-             << " | Since: "     << loginTime << "\n";
+    Session(int id, string uname, string userRole) {
+        userId = id;
+        username = uname;
+        role = userRole;
+        active = true;
     }
 };
+
+#endif
