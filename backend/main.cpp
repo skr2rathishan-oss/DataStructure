@@ -9,7 +9,6 @@
 
 using namespace std;
 
-// Helper function to validate numeric input
 void clearInputStream() {
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -282,6 +281,13 @@ int main() {
                 fileType,
                 fileSize
             );
+
+            // add file into permission graph and give owner automatic access
+            accessControl.addFileNode(fileName);
+            accessControl.grantPermission(auth.getCurrentUser()->username, fileName);
+
+            cout << "Owner permission added automatically for "
+                 << auth.getCurrentUser()->username << endl;
             break;
         }
 
@@ -298,6 +304,18 @@ int main() {
             if (cin.fail()) {
                 clearInputStream();
                 cout << "Invalid file ID! Please enter a number." << endl;
+                break;
+            }
+
+            FileRecord* file = fileService.getFileById(fileId);
+
+            if (file == nullptr) {
+                cout << "File not found!" << endl;
+                break;
+            }
+
+            if (!accessControl.checkPermission(auth.getCurrentUser()->username, file->fileName)) {
+                cout << "Access denied! You do not have permission for this file." << endl;
                 break;
             }
 
@@ -323,12 +341,21 @@ int main() {
 
             FileRecord* file = fileService.getFileById(fileId);
 
-            if (file != nullptr) {
-                undoService.moveToTrash(*file);
-                fileService.deleteFile(fileId);
-            } else {
+            if (file == nullptr) {
                 cout << "File not found!" << endl;
+                break;
             }
+
+            if (!accessControl.checkPermission(auth.getCurrentUser()->username, file->fileName)) {
+                cout << "Access denied! You do not have permission to delete this file." << endl;
+                break;
+            }
+
+            undoService.moveToTrash(*file);
+            fileService.deleteFile(fileId);
+            accessControl.revokePermission(auth.getCurrentUser()->username, file->fileName);
+
+            cout << "File deleted and moved to trash." << endl;
             break;
         }
 

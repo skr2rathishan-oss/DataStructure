@@ -26,13 +26,13 @@ public:
     }
 
     // Constructor with values
-    FileRecord(int id, string name, string path, string own, string type, int size) {
+    FileRecord(int id, string name, string path, string own, string type, int fSize) {
         fileId = id;
         fileName = name;
         filePath = path;
         owner = own;
         fileType = type;
-        fileSize = size;
+        fileSize = fSize;
         isDeleted = false;
     }
 };
