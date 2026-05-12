@@ -7,7 +7,8 @@ using namespace std;
 
 class Graph {
 private:
-    static const int MAX = 20;
+    // Increased from 20 to 300 for testing ~100+ users/files
+    static const int MAX = 300;
     string nodes[MAX];
     int adj[MAX][MAX];
     int count;
@@ -24,6 +25,7 @@ public:
 
     void addNode(string name) {
         if (count >= MAX) {
+            cerr << "❌ Graph is full! Cannot add node: " << name << endl;
             return;
         }
 
@@ -59,6 +61,19 @@ public:
 
         if (i != -1 && j != -1) {
             adj[i][j] = 0;
+        }
+    }
+
+    void removeIncomingEdges(string to, string keepFrom = "") {
+        int j = findNode(to);
+        if (j == -1) {
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            if (keepFrom.empty() || nodes[i] != keepFrom) {
+                adj[i][j] = 0;
+            }
         }
     }
 

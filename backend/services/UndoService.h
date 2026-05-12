@@ -5,6 +5,7 @@
 #include "../data_structures/Stack.h"
 #include "../models/FileRecord.h"
 #include "FileService.h"
+#include "AccessControlService.h"
 using namespace std;
 
 class UndoService {
@@ -20,8 +21,8 @@ public:
         cout << "\n🗑️  File moved to trash: " << file.fileName << endl;
     }
 
-    // Restore last deleted file
-    void restoreLastFile(FileService& fileService) {
+    // Restore last deleted file with permission restoration
+    void restoreLastFile(FileService& fileService, AccessControlService& accessControl) {
         if (trashStack.isEmpty()) {
             cout << "\n❌ Trash is empty! Nothing to restore." << endl;
             return;
@@ -32,9 +33,15 @@ public:
 
         if (original != nullptr) {
             original->isDeleted = false;
+            
+            // Restore owner's permission automatically
+            accessControl.addFileNode(original->fileId);
+            accessControl.grantPermission(original->owner, original->fileId);
+            
             cout << "\n✅ File restored successfully!" << endl;
             cout << "   Name : " << original->fileName << endl;
             cout << "   Path : " << original->filePath << endl;
+            cout << "   Owner permission restored: " << original->owner << endl;
         }
     }
 

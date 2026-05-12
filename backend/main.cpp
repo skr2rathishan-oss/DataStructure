@@ -2,7 +2,6 @@
 #include <limits>
 #include "services/AuthService.h"
 #include "services/FileService.h"
-#include "services/UndoService.h"
 #include "services/AccessControlService.h"
 #include "services/RequestService.h"
 #include "sample_data/sample_data.h"
@@ -17,12 +16,12 @@ void clearInputStream() {
 int main() {
     AuthService auth;
     FileService fileService;
-    UndoService undoService;
     AccessControlService accessControl;
     RequestService requestService;
 
     loadSampleData(auth, accessControl);
-    loadSampleRequests(requestService);
+    fileService.loadStoredFiles();  // Load previously stored files from storage/
+    fileService.syncPermissionGraph(accessControl);
 
     int choice;
     string username, password;
@@ -44,23 +43,24 @@ int main() {
             cout << "3. Logout" << endl;
 
             cout << "\n-- Permission Management --" << endl;
-            cout << "4. Grant File Permission" << endl;
-            cout << "5. Check File Permission" << endl;
-            cout << "6. Revoke File Permission" << endl;
-            cout << "7. Show Permission Graph" << endl;
+            cout << "4. Share File with User" << endl;
+            cout << "5. Change File Visibility" << endl;
+            cout << "6. Check File Access" << endl;
+            cout << "7. Revoke User Access" << endl;
+            cout << "11. Show Permission Graph" << endl;
 
-            cout << "\n-- Request Management --" << endl;
-            cout << "8. Create Upload Request" << endl;
-            cout << "9. Show Next Request" << endl;
-            cout << "10. Process Next Request" << endl;
+            cout << "\n-- Access Request Management --" << endl;
+            cout << "8. Request Access to File" << endl;
+            cout << "9. Show Next Access Request" << endl;
+            cout << "10. Process Next Access Request" << endl;
 
-            cout << "\n-- File Management --" << endl;
+            cout << "\n-- File Management (Real Files) --" << endl;
             cout << "19. Upload File" << endl;
             cout << "20. Download File" << endl;
             cout << "21. Delete File" << endl;
             cout << "22. Search File" << endl;
             cout << "23. View My Files" << endl;
-            cout << "27. Restore Last Deleted File" << endl;
+            cout << "27. Restore Deleted File from Trash" << endl;
 
             cout << "\n0. Exit" << endl;
         }
@@ -125,19 +125,50 @@ int main() {
                 break;
             }
 
-            if (auth.getCurrentUser()->role != "Admin") {
-                cout << "Only Admin can grant permission." << endl;
+            int fileId;
+            cout << "Enter file ID to share: ";
+            cin >> fileId;
+
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid file ID! Please enter a number." << endl;
+                break;
+            }
+
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr || file->isDeleted) {
+                cout << "File not found or deleted!" << endl;
+                break;
+            }
+
+            if (auth.getCurrentUser()->role != "Admin" &&
+                file->owner != auth.getCurrentUser()->username) {
+                cout << "Only Admin or the file owner can share this file." << endl;
                 break;
             }
 
             cout << "Enter username to grant permission: ";
             cin >> username;
 
-            cout << "Enter file name: ";
-            cin >> fileName;
+            if (!auth.userExists(username)) {
+                cout << "User not found!" << endl;
+                break;
+            }
 
-            accessControl.grantPermission(username, fileName);
-            cout << "Permission granted successfully." << endl;
+            if (username == file->owner) {
+                cout << "Owner already has access." << endl;
+                break;
+            }
+
+            accessControl.grantPermission(username, fileId);
+            if (file->visibility == "PRIVATE") {
+                fileService.setFileVisibility(fileId, "RESTRICTED");
+            }
+            cout << "\n✅ Permission granted successfully!" << endl;
+            cout << "   File: " << file->fileName << endl;
+            cout << "   File Node: file_" << file->fileId << endl;
+            cout << "   Path: " << file->filePath << endl;
+            cout << "   User: " << username << endl;
             break;
         }
 
@@ -147,16 +178,60 @@ int main() {
                 break;
             }
 
-            cout << "Enter file name to check access: ";
-            cin >> fileName;
+            int fileId;
+            cout << "Enter file ID to change visibility: ";
+            cin >> fileId;
 
-            if (accessControl.checkPermission(auth.getCurrentUser()->username, fileName)) {
-                cout << "Access allowed for "
-                     << auth.getCurrentUser()->username << endl;
-            } else {
-                cout << "Access denied for "
-                     << auth.getCurrentUser()->username << endl;
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid file ID! Please enter a number." << endl;
+                break;
             }
+
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr || file->isDeleted) {
+                cout << "File not found or deleted!" << endl;
+                break;
+            }
+
+            if (auth.getCurrentUser()->role != "Admin" &&
+                file->owner != auth.getCurrentUser()->username) {
+                cout << "Only Admin or the file owner can change visibility." << endl;
+                break;
+            }
+
+            int visibilityChoice;
+            cout << "Choose visibility:" << endl;
+            cout << "1. PRIVATE" << endl;
+            cout << "2. RESTRICTED" << endl;
+            cout << "3. PUBLIC" << endl;
+            cout << "Enter choice: ";
+            cin >> visibilityChoice;
+
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid visibility choice!" << endl;
+                break;
+            }
+
+            if (visibilityChoice == 1) {
+                fileService.setFileVisibility(fileId, "PRIVATE");
+                accessControl.makePrivate(fileId, file->owner);
+            } else if (visibilityChoice == 2) {
+                fileService.setFileVisibility(fileId, "RESTRICTED");
+                accessControl.makePrivate(fileId);
+            } else if (visibilityChoice == 3) {
+                fileService.setFileVisibility(fileId, "PUBLIC");
+                accessControl.makePublic(fileId);
+            } else {
+                cout << "Invalid visibility choice!" << endl;
+                break;
+            }
+
+            cout << "\n✅ File visibility updated." << endl;
+            cout << "   File: " << file->fileName << endl;
+            cout << "   File Node: file_" << file->fileId << endl;
+            cout << "   Visibility: " << file->visibility << endl;
             break;
         }
 
@@ -166,19 +241,38 @@ int main() {
                 break;
             }
 
-            if (auth.getCurrentUser()->role != "Admin") {
-                cout << "Only Admin can revoke permission." << endl;
+            int fileId;
+            cout << "Enter file ID to check access: ";
+            cin >> fileId;
+
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid file ID! Please enter a number." << endl;
                 break;
             }
 
-            cout << "Enter username to revoke permission: ";
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr || file->isDeleted) {
+                cout << "File not found or deleted!" << endl;
+                break;
+            }
+
+            cout << "Enter username to check: ";
             cin >> username;
 
-            cout << "Enter file name: ";
-            cin >> fileName;
+            User* checkedUser = auth.getUser(username);
+            string checkedRole = checkedUser != nullptr ? checkedUser->role : "";
 
-            accessControl.revokePermission(username, fileName);
-            cout << "Permission revoked successfully." << endl;
+            if (accessControl.canAccess(username, checkedRole, *file)) {
+                cout << "\n✅ Access allowed for " << username << endl;
+                cout << "   File: " << file->fileName << endl;
+                cout << "   Visibility: " << file->visibility << endl;
+                cout << "   File Node: file_" << file->fileId << endl;
+            } else {
+                cout << "\n❌ Access denied for " << username << endl;
+                cout << "   File: " << file->fileName << endl;
+                cout << "   Visibility: " << file->visibility << endl;
+            }
             break;
         }
 
@@ -188,7 +282,41 @@ int main() {
                 break;
             }
 
-            accessControl.showPermissions();
+            int fileId;
+            cout << "Enter file ID to revoke access: ";
+            cin >> fileId;
+
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid file ID! Please enter a number." << endl;
+                break;
+            }
+
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr || file->isDeleted) {
+                cout << "File not found or deleted!" << endl;
+                break;
+            }
+
+            if (auth.getCurrentUser()->role != "Admin" &&
+                file->owner != auth.getCurrentUser()->username) {
+                cout << "Only Admin or the file owner can revoke access." << endl;
+                break;
+            }
+
+            cout << "Enter username to revoke access: ";
+            cin >> username;
+
+            if (username == file->owner) {
+                cout << "Owner access cannot be revoked." << endl;
+                break;
+            }
+
+            accessControl.revokePermission(username, fileId);
+            cout << "\n✅ Permission revoked successfully!" << endl;
+            cout << "   File: " << file->fileName << endl;
+            cout << "   File Node: file_" << file->fileId << endl;
+            cout << "   User: " << username << endl;
             break;
         }
 
@@ -198,8 +326,12 @@ int main() {
                 break;
             }
 
+            string ownerUsername;
             int fileId;
-            cout << "Enter file ID for upload request: ";
+            cout << "Enter owner username: ";
+            cin >> ownerUsername;
+
+            cout << "Enter file ID: ";
             cin >> fileId;
 
             if (cin.fail()) {
@@ -208,15 +340,36 @@ int main() {
                 break;
             }
 
-            requestService.addRequest(
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr || file->isDeleted) {
+                cout << "❌ File not found or deleted!" << endl;
+                break;
+            }
+
+            if (file->owner != ownerUsername) {
+                cout << "❌ The entered owner does not own this file." << endl;
+                break;
+            }
+
+            if (file->owner == auth.getCurrentUser()->username) {
+                cout << "❌ You already own this file." << endl;
+                break;
+            }
+
+            if (accessControl.canAccess(auth.getCurrentUser()->username,
+                                        auth.getCurrentUser()->role,
+                                        *file)) {
+                cout << "❌ You already have access to this file." << endl;
+                break;
+            }
+
+            requestService.addAccessRequest(
                 requestId,
                 auth.getCurrentUser()->userId,
-                fileId,
-                "Upload"
+                auth.getCurrentUser()->username,
+                ownerUsername,
+                fileId
             );
-
-            cout << "Upload request created by "
-                 << auth.getCurrentUser()->username << endl;
 
             requestId++;
             break;
@@ -228,6 +381,7 @@ int main() {
                 break;
             }
 
+            cout << "\n=== Next Access Request ===" << endl;
             requestService.showNextRequest();
             break;
         }
@@ -243,55 +397,62 @@ int main() {
                 break;
             }
 
-            requestService.processNextRequest();
+            requestService.processNextRequest(
+                auth.getCurrentUser()->username,
+                auth.getCurrentUser()->role,
+                fileService,
+                accessControl
+            );
+            break;
+        }
+
+        case 11: {
+            if (!auth.isLoggedIn()) {
+                cout << "Please login first." << endl;
+                break;
+            }
+
+            accessControl.showPermissions();
             break;
         }
 
         case 19: {
+            // Upload Real File
             if (!auth.isLoggedIn()) {
                 cout << "Please login first!" << endl;
                 break;
             }
 
-            string filePath, fileType;
-            int fileSize;
+            string sourcePath;
+            cout << "Enter real file path (e.g., C:\\Users\\...\\file.pdf): ";
+            getline(cin >> ws, sourcePath);
 
-            cout << "Enter file name: ";
-            cin >> fileName;
-
-            cout << "Enter file path: ";
-            cin >> filePath;
-
-            cout << "Enter file type: ";
-            cin >> fileType;
-
-            cout << "Enter file size (bytes): ";
-            cin >> fileSize;
-
-            if (cin.fail()) {
-                clearInputStream();
-                cout << "Invalid file size! Please enter a number." << endl;
-                break;
+            // Support paths pasted with quotes, e.g. "C:\\Users\\...\\My File.pdf"
+            if (sourcePath.size() >= 2 &&
+                ((sourcePath.front() == '"' && sourcePath.back() == '"') ||
+                 (sourcePath.front() == '\'' && sourcePath.back() == '\''))) {
+                sourcePath = sourcePath.substr(1, sourcePath.size() - 2);
             }
 
-            fileService.uploadFile(
-                fileName,
-                filePath,
-                auth.getCurrentUser()->username,
-                fileType,
-                fileSize
-            );
+            FileRecord uploadedFile = fileService.uploadRealFile(sourcePath, auth.getCurrentUser()->username);
 
-            // add file into permission graph and give owner automatic access
-            accessControl.addFileNode(fileName);
-            accessControl.grantPermission(auth.getCurrentUser()->username, fileName);
-
-            cout << "Owner permission added automatically for "
-                 << auth.getCurrentUser()->username << endl;
+            // Check if upload was successful (valid fileId)
+            if (uploadedFile.fileId > 0) {
+                // Add file to permission graph and grant owner automatic access
+                accessControl.addFileNode(uploadedFile.fileId);
+                accessControl.grantPermission(auth.getCurrentUser()->username, uploadedFile.fileId);
+                cout << "\n✅ Owner permission added automatically for "
+                     << auth.getCurrentUser()->username << endl;
+                cout << "   Default visibility: " << uploadedFile.visibility << endl;
+                cout << "   File node: file_" << uploadedFile.fileId << endl;
+            } else {
+                cout << "\n❌ File upload failed - permission not granted." << endl;
+            }
             break;
         }
 
         case 20: {
+            // Download Real File
             if (!auth.isLoggedIn()) {
                 cout << "Please login first!" << endl;
                 break;
@@ -314,16 +475,24 @@ int main() {
                 break;
             }
 
-            if (!accessControl.checkPermission(auth.getCurrentUser()->username, file->fileName)) {
+            if (file->isDeleted) {
+                cout << "Cannot download deleted file!" << endl;
+                break;
+            }
+
+            if (!accessControl.canAccess(auth.getCurrentUser()->username,
+                                         auth.getCurrentUser()->role,
+                                         *file)) {
                 cout << "Access denied! You do not have permission for this file." << endl;
                 break;
             }
 
-            fileService.downloadFile(fileId);
+            fileService.downloadRealFile(fileId);
             break;
         }
 
         case 21: {
+            // Delete Real File
             if (!auth.isLoggedIn()) {
                 cout << "Please login first!" << endl;
                 break;
@@ -346,16 +515,27 @@ int main() {
                 break;
             }
 
-            if (!accessControl.checkPermission(auth.getCurrentUser()->username, file->fileName)) {
+            if (file->isDeleted) {
+                cout << "File is already deleted!" << endl;
+                break;
+            }
+
+            if (auth.getCurrentUser()->role != "Admin" &&
+                file->owner != auth.getCurrentUser()->username &&
+                !accessControl.checkPermission(auth.getCurrentUser()->username, fileId)) {
                 cout << "Access denied! You do not have permission to delete this file." << endl;
                 break;
             }
 
-            undoService.moveToTrash(*file);
-            fileService.deleteFile(fileId);
-            accessControl.revokePermission(auth.getCurrentUser()->username, file->fileName);
-
-            cout << "File deleted and moved to trash." << endl;
+            // Delete the real file (moves to trash)
+            if (fileService.deleteRealFile(fileId)) {
+                cout << "✅ File moved to trash successfully." << endl;
+                cout << "   File ID: " << fileId << endl;
+                cout << "   Trash location: " << file->filePath << endl;
+                accessControl.makePrivate(fileId);
+            } else {
+                cout << "❌ Failed to delete file." << endl;
+            }
             break;
         }
 
@@ -368,7 +548,10 @@ int main() {
             cout << "Enter file name to search: ";
             cin >> fileName;
 
-            fileService.searchFile(fileName);
+            fileService.searchAccessibleFiles(fileName,
+                                              auth.getCurrentUser()->username,
+                                              &accessControl,
+                                              auth.getCurrentUser()->role);
             break;
         }
 
@@ -378,17 +561,50 @@ int main() {
                 break;
             }
 
-            fileService.viewAllFiles(auth.getCurrentUser()->username);
+            fileService.viewAccessibleFiles(auth.getCurrentUser()->username,
+                                            &accessControl,
+                                            auth.getCurrentUser()->role);
             break;
         }
 
         case 27: {
+            // Restore Deleted File from Trash
             if (!auth.isLoggedIn()) {
                 cout << "Please login first!" << endl;
                 break;
             }
 
-            undoService.restoreLastFile(fileService);
+            int fileId;
+            cout << "Enter file ID to restore from trash: ";
+            cin >> fileId;
+
+            if (cin.fail()) {
+                clearInputStream();
+                cout << "Invalid file ID! Please enter a number." << endl;
+                break;
+            }
+
+            FileRecord* file = fileService.getFileById(fileId);
+            if (file == nullptr) {
+                cout << "File not found!" << endl;
+                break;
+            }
+
+            if (!file->isDeleted) {
+                cout << "This file is not in trash." << endl;
+                break;
+            }
+
+            if (fileService.restoreRealFile(fileId)) {
+                accessControl.addFileNode(file->fileId);
+                if (file->owner != "unknown") {
+                    accessControl.grantPermission(file->owner, fileId);
+                    cout << "Owner permission restored for: " << file->owner << endl;
+                }
+                if (file->visibility == "PUBLIC") {
+                    accessControl.makePublic(fileId);
+                }
+            }
             break;
         }
 

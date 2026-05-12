@@ -21,10 +21,9 @@ void loadSampleData(AuthService& auth, AccessControlService& accessControl) {
     accessControl.addFileNode("file103");
 }
 
-void loadSampleRequests(RequestService& requestService) {
-    requestService.addRequest(1, 2, 101, "Upload");
-    requestService.addRequest(2, 3, 101, "Access");
-    requestService.addRequest(3, 2, 102, "Download");
+void loadSampleRequests(RequestService&) {
+    // Intentionally left empty.
+    // Request management now uses live access requests created from the menu.
 }
 
 #endif

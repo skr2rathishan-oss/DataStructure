@@ -4,12 +4,14 @@
 #include <string>
 #include "../models/User.h"
 #include "../models/Session.h"
-#include "../data_structures/HashTable.h"
+#include "../data_structures/UserHashTable.h"
 using namespace std;
 
 class AuthService {
 private:
-    HashTable userTable;
+    // Using UserHashTable: better design with tombstone pattern and EMPTY/OCCUPIED/DELETED states
+    // Provides O(1) average lookup for login + handles deletions correctly
+    UserHashTable userTable;
     User* currentUser;
     Session currentSession;
 
@@ -20,7 +22,7 @@ public:
 
     void registerUser(int id, string username, string password, string role) {
         User newUser(id, username, password, role);
-        userTable.insert(newUser);
+        userTable.insert(username, newUser);
     }
 
     bool login(string username, string password) {
@@ -46,6 +48,14 @@ public:
 
     User* getCurrentUser() {
         return currentUser;
+    }
+
+    User* getUser(string username) {
+        return userTable.get(username);
+    }
+
+    bool userExists(string username) {
+        return userTable.exists(username);
     }
 
     bool isSessionActive() {

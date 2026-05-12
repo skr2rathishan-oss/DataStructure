@@ -13,6 +13,7 @@ public:
     string fileType;
     int fileSize;
     bool isDeleted;
+    string visibility;
 
     // Default constructor
     FileRecord() {
@@ -23,6 +24,7 @@ public:
         fileType = "";
         fileSize = 0;
         isDeleted = false;
+        visibility = "PRIVATE";
     }
 
     // Constructor with values
@@ -34,6 +36,7 @@ public:
         fileType = type;
         fileSize = fSize;
         isDeleted = false;
+        visibility = "PRIVATE";
     }
 };
 

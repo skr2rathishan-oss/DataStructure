@@ -1,0 +1,107 @@
+
+Γ£à Storage directories initialized
+Request added successfully
+Request added successfully
+Request added successfully
+
+Γ£à Loaded 2 previously stored file(s) from storage/files/
+
+=== Smart Cloud Storage ===
+1. Login
+0. Exit
+Enter choice: Enter username: Enter password: Login successful!
+Welcome, admin
+Role: Admin
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management (Real Files) --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Deleted File from Trash
+
+0. Exit
+Enter choice: Enter file name to search: 
+--- Search Results for: resume ---
+  ID: 1001 | Name: resume.pdf | Owner: [Unregistered] | Path: storage/files\1001_resume.pdf
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management (Real Files) --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Deleted File from Trash
+
+0. Exit
+Enter choice: Enter file ID to grant permission: Enter username to grant permission: 
+Γ£à Permission granted successfully!
+   File: resume.pdf
+   Path: storage/files\1001_resume.pdf
+   User: user1
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management (Real Files) --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Deleted File from Trash
+
+0. Exit
+Enter choice: Exiting...

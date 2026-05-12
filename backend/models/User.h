@@ -2,6 +2,7 @@
 #define USER_H
 
 #include <string>
+#include <iostream>
 using namespace std;
 
 class User {
@@ -28,6 +29,11 @@ public:
         password = pass;
         role = r;
         isActive = true;
+    }
+
+    // Display user info
+    void display() const {
+        cout << username << " (ID: " << userId << ", Role: " << role << ")";
     }
 };
 

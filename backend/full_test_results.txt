@@ -1,0 +1,174 @@
+Request added successfully
+Request added successfully
+Request added successfully
+
+=== Smart Cloud Storage ===
+1. Login
+0. Exit
+Enter choice: Enter username: Enter password: Login successful!
+Welcome, admin
+Role: Admin
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Last Deleted File
+
+0. Exit
+Enter choice: Enter file name: Enter file path: Enter file type: Enter file size (bytes): 
+Γ£à File uploaded successfully!
+   File ID : 1001
+   Name    : testfile.pdf
+   Path    : /data/test.pdf (metadata, not real storage)
+   Owner   : admin
+   Type    : PDF
+   Size    : 2048 bytes
+Owner permission added automatically for admin
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Last Deleted File
+
+0. Exit
+Enter choice: Enter file ID to delete: 
+≡ƒùæ∩╕Å  File moved to trash: testfile.pdf
+File deleted and moved to trash.
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Last Deleted File
+
+0. Exit
+Enter choice: 
+Γ£à File restored successfully!
+   Name : testfile.pdf
+   Path : /data/test.pdf
+   Owner permission restored: admin
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Last Deleted File
+
+0. Exit
+Enter choice: Enter file ID: 
+Γ¼ç∩╕Å  Downloading file...
+   Name : testfile.pdf
+   Path : /data/test.pdf (metadata path, real storage not implemented)
+   Size : 2048 bytes
+   Download complete! (simulation - real file transfer not implemented)
+
+=== Smart Cloud Storage ===
+Logged in as: admin (Admin)
+
+-- Account --
+2. Show Current User
+3. Logout
+
+-- Permission Management --
+4. Grant File Permission
+5. Check File Permission
+6. Revoke File Permission
+7. Show Permission Graph
+
+-- Request Management --
+8. Create Upload Request
+9. Show Next Request
+10. Process Next Request
+
+-- File Management --
+19. Upload File
+20. Download File
+21. Delete File
+22. Search File
+23. View My Files
+27. Restore Last Deleted File
+
+0. Exit
+Enter choice: Exiting...
