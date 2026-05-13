@@ -1,1 +1,206 @@
-/* Responsive CSS */
+/* SmartCloudStorage CSS System */
+/* Adheres to .skills Taste Design Guidelines */
+
+:root {
+    --canvas-white: #F9FAFB;
+    --pure-surface: #FFFFFF;
+    --charcoal-ink: #18181B;
+    --muted-steel: #71717A;
+    --whisper-border: rgba(226,232,240,0.8);
+    --accent-blue: #2563EB; /* Single calm accent */
+    --accent-blue-hover: #1D4ED8;
+    --danger-red: #EF4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Satoshi', 'Inter', -apple-system, sans-serif;
+    background-color: var(--canvas-white);
+    color: var(--charcoal-ink);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100dvh;
+}
+
+/* Layout - Desktop Sidebar, Mobile Stacked */
+.app-container {
+    display: flex;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.sidebar {
+    width: 260px;
+    background: var(--pure-surface);
+    border-right: 1px solid var(--whisper-border);
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+}
+
+.sidebar h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 3rem;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--muted-steel);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    background: var(--canvas-white);
+    color: var(--charcoal-ink);
+    transform: translateX(4px);
+}
+
+.main-content {
+    flex: 1;
+    padding: 3rem 4rem;
+    overflow-y: auto;
+}
+
+/* Typography */
+h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+}
+
+/* Components */
+.card {
+    background: var(--pure-surface);
+    border: 1px solid var(--whisper-border);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-primary {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-blue-hover);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: var(--danger-red);
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+}
+
+/* Inputs */
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted-steel);
+}
+
+.input-group input, .input-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--whisper-border);
+    border-radius: 0.5rem;
+    background: var(--canvas-white);
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus, .input-group select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--whisper-border);
+}
+
+.data-table th {
+    font-weight: 500;
+    color: var(--muted-steel);
+    font-size: 0.875rem;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--canvas-white);
+    border: 1px solid var(--whisper-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--whisper-border);
+        padding: 1.5rem;
+    }
+    .nav-links {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+    .main-content {
+        padding: 1.5rem;
+    }
+}

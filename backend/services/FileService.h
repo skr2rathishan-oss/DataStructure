@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <unordered_set>
 #include "../models/FileRecord.h"
 #include "../data_structures/FileHashTable.h"
@@ -15,19 +16,6 @@
 #include "StorageService.h"
 using namespace std;
 
-/*
- * FileService - Manages file metadata and operations
- *
- * CURRENT STATUS: Metadata-only implementation
- * ⚠️  NOTE: filePath and fileSize are stored as METADATA only.
- *     Real file upload/download from disk storage is NOT implemented yet.
- *     This is ready for future integration with cloud storage APIs or local file system.
- *
- * Data structures used:
- * - FileHashTable: O(1) lookup by file ID
- * - BST: O(log n) search by file ID
- * - LinkedList: Linear traversal for listing/searching
- */
 
 class FileService {
 private:
@@ -36,6 +24,48 @@ private:
     LinkedList<FileRecord> fileList;
     StorageService storage;
     int idCounter;
+
+    bool canViewFile(FileRecord* file,
+                     const string& username,
+                     AccessControlService* accessControl,
+                     const string& role = "") {
+        if (file == nullptr || file->isDeleted) {
+            return false;
+        }
+
+        if (accessControl != nullptr) {
+            return accessControl->canAccess(username, role, *file);
+        }
+
+        if (role == "Admin" || file->owner == username) {
+            return true;
+        }
+
+        return file->visibility == "PUBLIC";
+    }
+
+    void moveSidecarFile(const string& sourcePath, const string& targetPath) {
+        if (sourcePath.empty() || targetPath.empty() || !filesystem::exists(sourcePath)) {
+            return;
+        }
+
+        try {
+            filesystem::rename(sourcePath, targetPath);
+        } catch (const exception&) {
+            ifstream source(sourcePath, ios::binary);
+            ofstream target(targetPath, ios::binary | ios::trunc);
+
+            if (!source.is_open() || !target.is_open()) {
+                throw runtime_error("Could not copy metadata file");
+            }
+
+            target << source.rdbuf();
+            if (!source.good() || !target.good()) {
+                throw runtime_error("Could not finish copying metadata file");
+            }
+            filesystem::remove(sourcePath);
+        }
+    }
 
 public:
     FileService() {
@@ -74,12 +104,9 @@ public:
             // Read latest state from hash table because linked-list nodes store copies.
             FileRecord* current = fileTable.get(node->data.fileId);
             bool isOwner = current != nullptr && current->owner == username;
-            bool canAccess = current != nullptr && current->owner == "unknown";
-            if (current != nullptr && accessControl != nullptr) {
-                canAccess = accessControl->canAccess(username, role, *current) || current->owner == "unknown";
-            }
+            bool canAccess = canViewFile(current, username, accessControl, role);
 
-            if (current != nullptr && !current->isDeleted &&
+            if (current != nullptr &&
                 shownIds.find(current->fileId) == shownIds.end() &&
                 canAccess) {
                 cout << "  ID: " << current->fileId
@@ -112,12 +139,9 @@ public:
         unordered_set<int> shownIds;
         while (node != nullptr) {
             FileRecord* current = fileTable.get(node->data.fileId);
-            if (current != nullptr && !current->isDeleted &&
+            if (current != nullptr &&
                 shownIds.find(current->fileId) == shownIds.end()) {
-                bool canAccess = accessControl == nullptr || current->owner == "unknown";
-                if (accessControl != nullptr) {
-                    canAccess = accessControl->canAccess(username, role, *current) || current->owner == "unknown";
-                }
+                bool canAccess = canViewFile(current, username, accessControl, role);
 
                 // Search by exact name or case-insensitive partial match
                 string nodeName = current->fileName;
@@ -140,6 +164,61 @@ public:
             node = node->next;
         }
         if (!found) cout << "  File not found!" << endl;
+    }
+
+    vector<FileRecord> getAccessibleFilesList(const string& username, AccessControlService* accessControl, const string& role = "") {
+        vector<FileRecord> result;
+        auto* node = fileList.getHead();
+        unordered_set<int> shownIds;
+        while (node != nullptr) {
+            FileRecord* current = fileTable.get(node->data.fileId);
+            bool canAccess = canViewFile(current, username, accessControl, role);
+            if (current != nullptr && shownIds.find(current->fileId) == shownIds.end() && canAccess) {
+                result.push_back(*current);
+                shownIds.insert(current->fileId);
+            }
+            node = node->next;
+        }
+        return result;
+    }
+
+    vector<FileRecord> searchAccessibleFilesList(const string& fileName, const string& username, AccessControlService* accessControl, const string& role = "") {
+        vector<FileRecord> result;
+        auto* node = fileList.getHead();
+        unordered_set<int> shownIds;
+        while (node != nullptr) {
+            FileRecord* current = fileTable.get(node->data.fileId);
+            if (current != nullptr && shownIds.find(current->fileId) == shownIds.end()) {
+                bool canAccess = canViewFile(current, username, accessControl, role);
+                string nodeName = current->fileName;
+                string searchName = fileName;
+                transform(nodeName.begin(), nodeName.end(), nodeName.begin(), ::tolower);
+                transform(searchName.begin(), searchName.end(), searchName.begin(), ::tolower);
+                if (nodeName.find(searchName) != string::npos && canAccess) {
+                    result.push_back(*current);
+                    shownIds.insert(current->fileId);
+                }
+            }
+            node = node->next;
+        }
+        return result;
+    }
+
+    vector<FileRecord> getTrashFilesList(const string& username, const string& role) {
+        vector<FileRecord> result;
+        auto* node = fileList.getHead();
+        unordered_set<int> shownIds;
+        while (node != nullptr) {
+            FileRecord* current = fileTable.get(node->data.fileId);
+            if (current != nullptr && current->isDeleted && shownIds.find(current->fileId) == shownIds.end()) {
+                if (role == "Admin" || current->owner == username) {
+                    result.push_back(*current);
+                    shownIds.insert(current->fileId);
+                }
+            }
+            node = node->next;
+        }
+        return result;
     }
 
     // Download a file (metadata simulation - real download not implemented)
@@ -386,12 +465,10 @@ public:
 
             string oldMetadataPath = getMetadataPath(oldStoragePath);
             string newMetadataPath = getMetadataPath(file->filePath);
-            if (!oldMetadataPath.empty() && !newMetadataPath.empty() && filesystem::exists(oldMetadataPath)) {
-                try {
-                    filesystem::rename(oldMetadataPath, newMetadataPath);
-                } catch (const exception& e) {
-                    cerr << "❌ Error moving metadata to trash: " << e.what() << endl;
-                }
+            try {
+                moveSidecarFile(oldMetadataPath, newMetadataPath);
+            } catch (const exception& e) {
+                cerr << "❌ Error moving metadata to trash: " << e.what() << endl;
             }
             cout << "   File moved to trash successfully." << endl;
             return true;
@@ -426,18 +503,16 @@ public:
         if (storage.restoreFromTrash(file->filePath)) {
             // Update file record
             string oldTrashPath = file->filePath;
-            string storedFileName = to_string(fileId) + "_" + file->fileName;
+            string storedFileName = filesystem::path(oldTrashPath).filename().string();
             file->filePath = storage.getFilesDir() + "/" + storedFileName;
             file->isDeleted = false;
 
             string oldMetadataPath = getMetadataPath(oldTrashPath);
             string newMetadataPath = getMetadataPath(file->filePath);
-            if (!oldMetadataPath.empty() && !newMetadataPath.empty() && filesystem::exists(oldMetadataPath)) {
-                try {
-                    filesystem::rename(oldMetadataPath, newMetadataPath);
-                } catch (const exception& e) {
-                    cerr << "❌ Error restoring metadata from trash: " << e.what() << endl;
-                }
+            try {
+                moveSidecarFile(oldMetadataPath, newMetadataPath);
+            } catch (const exception& e) {
+                cerr << "❌ Error restoring metadata from trash: " << e.what() << endl;
             }
             cout << "   File restored successfully." << endl;
             return true;
@@ -453,8 +528,8 @@ public:
     void loadStoredFiles() {
         try {
             namespace fs = filesystem;
-            string filesDir = "storage/files";
-            string trashDir = "storage/trash";
+            string filesDir = storage.getFilesDir();
+            string trashDir = storage.getTrashDir();
 
             // Check if storage directories exist
             if (!fs::exists(filesDir) && !fs::exists(trashDir)) {
@@ -467,11 +542,38 @@ public:
             int maxFileId = 1000;
             unordered_set<int> loadedIds;
 
+            auto scanHighestStoredId = [&](const string& dirPath) {
+                if (!fs::exists(dirPath)) return;
+
+                for (const auto& entry : fs::directory_iterator(dirPath)) {
+                    if (!entry.is_regular_file()) continue;
+                    if (entry.path().extension() == ".meta") continue;
+
+                    string fileName = entry.path().filename().string();
+                    size_t underscorePos = fileName.find('_');
+                    if (underscorePos == string::npos || underscorePos == 0) continue;
+
+                    try {
+                        int parsedFileId = stoi(fileName.substr(0, underscorePos));
+                        if (parsedFileId > maxFileId) {
+                            maxFileId = parsedFileId;
+                        }
+                    } catch (const exception&) {
+                        // Invalid storage files are reported during the actual load pass.
+                    }
+                }
+            };
+
+            scanHighestStoredId(filesDir);
+            scanHighestStoredId(trashDir);
+            int nextSyntheticId = maxFileId + 1;
+
             auto loadDirectory = [&](const string& dirPath, bool isDeletedFlag, int& counter) {
                 if (!fs::exists(dirPath)) return;
 
                 for (const auto& entry : fs::directory_iterator(dirPath)) {
                     if (!entry.is_regular_file()) continue;
+                    if (entry.path().extension() == ".meta") continue;
 
                     string fullPath = entry.path().string();
                     string fileName = entry.path().filename().string();
@@ -481,11 +583,20 @@ public:
                     if (underscorePos == string::npos || underscorePos == 0) continue;
 
                     try {
-                        int fileId = stoi(fileName.substr(0, underscorePos));
+                        int parsedFileId = stoi(fileName.substr(0, underscorePos));
+                        int fileId = parsedFileId;
 
-                        // Skip duplicates by ID to avoid repeated rows.
+                        // Old test uploads can leave duplicate file ID prefixes.
+                        // Keep every real file visible by assigning a fresh in-memory ID.
                         if (loadedIds.find(fileId) != loadedIds.end()) {
-                            continue;
+                            fileId = nextSyntheticId;
+                            while (loadedIds.find(fileId) != loadedIds.end()) {
+                                fileId++;
+                            }
+                            nextSyntheticId = fileId + 1;
+                            cerr << "Duplicate stored file ID " << parsedFileId
+                                 << " found in " << fileName
+                                 << "; loaded as ID " << fileId << endl;
                         }
 
                         string originalName = fileName.substr(underscorePos + 1);

@@ -46,6 +46,51 @@ public:
         cout << "Status           : " << currentRequest.status << endl;
     }
 
+    // API Helper: get next request
+    Request* getNextRequestData() {
+        if (requestQueue.isEmpty()) {
+            return nullptr;
+        }
+        // Since we return a pointer, we need to return the address of a static/dynamic copy or simply value.
+        // Returning a copy is safer. Let's return by value and use a boolean flag or a struct wrapper.
+        // For simplicity, we can just return a heap allocated copy, caller must free. Or use pointers if possible.
+        // Given Request is simple, we can return a new copy.
+        return new Request(requestQueue.front());
+    }
+
+    // API Helper: process next request by boolean
+    bool processNextRequestApi(const string& processorUsername, const string& processorRole, bool approved, FileService& fileService, AccessControlService& accessControl) {
+        if (requestQueue.isEmpty()) {
+            return false;
+        }
+
+        Request currentRequest = requestQueue.front();
+        FileRecord* file = fileService.getFileById(currentRequest.fileId);
+
+        if (file == nullptr) {
+            requestQueue.dequeue();
+            return false;
+        }
+
+        bool canProcess = (processorRole == "Admin" || processorUsername == currentRequest.ownerUsername);
+        if (!canProcess) {
+            return false;
+        }
+
+        requestQueue.dequeue();
+
+        if (approved) {
+            accessControl.addUserNode(currentRequest.requesterUsername);
+            accessControl.addFileNode(currentRequest.fileId);
+            accessControl.grantPermission(currentRequest.requesterUsername, currentRequest.fileId);
+            if (file->visibility == "PRIVATE") {
+                fileService.setFileVisibility(currentRequest.fileId, "RESTRICTED");
+            }
+            return true;
+        }
+        return true;
+    }
+
     void processNextRequest(const string& processorUsername,
                             const string& processorRole,
                             FileService& fileService,
@@ -89,6 +134,9 @@ public:
             accessControl.addUserNode(currentRequest.requesterUsername);
             accessControl.addFileNode(currentRequest.fileId);
             accessControl.grantPermission(currentRequest.requesterUsername, currentRequest.fileId);
+            if (file->visibility == "PRIVATE") {
+                fileService.setFileVisibility(currentRequest.fileId, "RESTRICTED");
+            }
             cout << "\n✅ Request approved." << endl;
             cout << "   Access granted to: " << currentRequest.requesterUsername << endl;
             cout << "   File ID: " << currentRequest.fileId << endl;

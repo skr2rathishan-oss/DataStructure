@@ -1,5 +1,7 @@
 # Local build output
 /backend/main.exe
+/api_server/server.exe
 
 # Runtime file storage
 /backend/storage/
+/api_server/storage/

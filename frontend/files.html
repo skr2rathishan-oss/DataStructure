@@ -1,8 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Files</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Files - SmartCloudStorage</title>
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <h1>Storage</h1>
+            <ul class="nav-links">
+                <li><a href="files.html" class="active">Files</a></li>
+                <li><a href="permissions.html">Permissions</a></li>
+                <li><a href="requests.html">Access Requests</a></li>
+                <li><a href="trash.html">Trash</a></li>
+                <li><a href="#" id="logoutBtn" style="color: var(--danger-red); margin-top: 2rem;">Logout</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <h2>My Files</h2>
+            
+            <div class="card">
+                <form id="uploadForm" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="input-group" style="margin-bottom: 0; flex: 1; min-width: 260px;">
+                        <label>File Path</label>
+                        <input type="text" id="uploadPath" placeholder="C:\Users\Rathishan\Documents\report.pdf" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload File</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <input type="text" id="searchInput" placeholder="Search files..." style="flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--whisper-border); border-radius: 0.5rem;">
+                    <button id="searchBtn" class="btn btn-primary">Search</button>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Owner</th>
+                            <th>Visibility</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="js/files.js"></script>
 </body>
 </html>

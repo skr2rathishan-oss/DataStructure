@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <filesystem>
+#include <fstream>
+#include <stdexcept>
 #include <string>
 using namespace std;
 namespace fs = filesystem;
@@ -27,9 +29,58 @@ private:
     string downloadsDir = "storage/downloads";
     string trashDir = "storage/trash";
 
+    bool copyFileBytes(const string& sourcePath, const string& targetPath) {
+        ifstream source(sourcePath, ios::binary);
+        ofstream target(targetPath, ios::binary | ios::trunc);
+
+        if (!source.is_open() || !target.is_open()) {
+            return false;
+        }
+
+        target << source.rdbuf();
+        return source.good() && target.good();
+    }
+
+    void moveFileSafely(const string& sourcePath, const string& targetPath) {
+        try {
+            fs::rename(sourcePath, targetPath);
+        } catch (const exception&) {
+            if (!copyFileBytes(sourcePath, targetPath)) {
+                throw runtime_error("Could not copy file bytes to target path");
+            }
+            fs::remove(sourcePath);
+        }
+    }
+
 public:
     StorageService() {
+        resolveStoragePath();
         initializeDirectories();
+    }
+
+    void resolveStoragePath() {
+        try {
+            fs::path current = fs::current_path();
+            string folderName = current.filename().string();
+            fs::path storageRoot;
+
+            if (folderName == "api_server") {
+                storageRoot = current.parent_path() / "backend" / "storage";
+            } else if (folderName == "backend") {
+                storageRoot = current / "storage";
+            } else if (fs::exists("backend") && fs::is_directory("backend")) {
+                storageRoot = current / "backend" / "storage";
+            } else {
+                storageRoot = current / "storage";
+            }
+
+            basePath = storageRoot.lexically_normal().string();
+            filesDir = (fs::path(basePath) / "files").string();
+            downloadsDir = (fs::path(basePath) / "downloads").string();
+            trashDir = (fs::path(basePath) / "trash").string();
+        } catch (const exception& e) {
+            cerr << "\n❌ Failed to resolve storage path: " << e.what() << endl;
+        }
     }
 
     // Create all required storage directories
@@ -142,7 +193,7 @@ public:
             string fileName = fs::path(storagePath).filename().string();
             string trashPath = trashDir + "/" + fileName;
 
-            fs::rename(storagePath, trashPath);
+            moveFileSafely(storagePath, trashPath);
 
             cout << "\n🗑️  File moved to trash: " << trashPath << endl;
             return true;
@@ -163,7 +214,7 @@ public:
             string fileName = fs::path(trashPath).filename().string();
             string storagePath = filesDir + "/" + fileName;
 
-            fs::rename(trashPath, storagePath);
+            moveFileSafely(trashPath, storagePath);
 
             cout << "\n✅ File restored from trash: " << storagePath << endl;
             return true;

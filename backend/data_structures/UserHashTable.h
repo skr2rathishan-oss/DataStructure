@@ -5,15 +5,7 @@
 #include "../models/User.h"
 using namespace std;
 
-/*
- * UserHashTable — custom open-addressing hash table
- * Key   : username (string)
- * Value : User object
- *
- * Why hash table?
- * Login is checked before EVERY sensitive operation.
- * Hash table gives O(1) average lookup vs O(n) list scan.
- */
+
 class UserHashTable {
 private:
     static const int TABLE_SIZE = 53; // prime number = fewer collisions
@@ -52,7 +44,7 @@ public:
                 return true;
             }
         }
-        cerr << "UserHashTable is full!\n";
+        cout << "UserHashTable is full!\n";
         return false;
     }
 

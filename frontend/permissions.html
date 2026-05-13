@@ -1,8 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Permissions</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permissions - SmartCloudStorage</title>
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <h1>Storage</h1>
+            <ul class="nav-links">
+                <li><a href="files.html">Files</a></li>
+                <li><a href="permissions.html" class="active">Permissions</a></li>
+                <li><a href="requests.html">Access Requests</a></li>
+                <li><a href="trash.html">Trash</a></li>
+                <li><a href="#" id="logoutBtn" style="color: var(--danger-red); margin-top: 2rem;">Logout</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <h2>Manage Permissions</h2>
+            
+            <div class="card" id="adminControls">
+                <h3>Grant / Revoke Access</h3>
+                <form id="permForm" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-top: 1rem;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Target Username</label>
+                        <input type="text" id="targetUser" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>File ID</label>
+                        <input type="number" id="fileId" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btnGrant">Grant</button>
+                    <button type="button" class="btn btn-danger" id="btnRevoke">Revoke</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Check My Access</h3>
+                <form id="checkForm" style="display: flex; gap: 1rem; align-items: flex-end; margin-top: 1rem;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>File ID</label>
+                        <input type="number" id="checkFileId" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Check</button>
+                </form>
+                <div id="checkResult" style="margin-top: 1rem; font-weight: 500;"></div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="js/permissions.js"></script>
 </body>
 </html>
